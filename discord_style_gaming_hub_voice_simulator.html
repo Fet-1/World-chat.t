@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Gaming Chat & Voice Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        discord: {
+                            darkest: '#1e1f22',
+                            darker: '#2b2d31',
+                            dark: '#313338',
+                            light: '#383a40',
+                            accent: '#5865f2',
+                            accentHover: '#4752c4',
+                            green: '#23a55a',
+                            rose: '#f23f43'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #2b2d31; }
+        ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #111214; }
+        
+        .speaking-glow {
+            box-shadow: 0 0 0 3px #23a55a, 0 0 12px rgba(35, 165, 90, 0.6);
+            animation: pulse-speaking 1.2s infinite ease-in-out alternate;
+        }
+        @keyframes pulse-speaking {
+            0% { box-shadow: 0 0 0 2px #23a55a, 0 0 6px rgba(35, 165, 90, 0.4); }
+            100% { box-shadow: 0 0 0 4px #23a55a, 0 0 16px rgba(35, 165, 90, 0.8); }
+        }
+    </style>
+</head>
+<body class="bg-discord-darkest text-slate-200 h-full overflow-hidden flex flex-col select-none">
+
+    <!-- Top App Navigation / Status Bar -->
+    <header class="h-10 bg-discord-darkest border-b border-black/30 flex items-center justify-between px-3 text-xs font-medium text-slate-400 shrink-0">
+        <div class="flex items-center space-x-2">
+            <button id="toggleMobileSidebarBtn" class="md:hidden text-slate-300 hover:text-white p-1">
+                <i class="fa-solid fa-bars text-base"></i>
+            </button>
+            <span class="flex items-center space-x-1.5 text-white font-bold tracking-wide">
+                <i class="fa-solid fa-gamepad text-discord-accent text-sm"></i>
+                <span>NEXUS GAMING COMMUNITY</span>
+            </span>
+        </div>
+        <div class="flex items-center space-x-3 text-slate-400 text-xs">
+            <span class="hidden sm:inline-flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-discord-green inline-block"></span> <span>Voice Server: Asia East (12ms)</span></span>
+            <button onclick="playAudioEffect('join')" class="hover:text-white"><i class="fa-solid fa-gear"></i></button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- 1. SERVER ICON SIDEBAR -->
+        <div class="w-16 bg-discord-darkest flex flex-col items-center py-3 space-y-2 shrink-0 border-r border-black/20">
+            <button class="w-12 h-12 rounded-2xl bg-discord-accent text-white flex items-center justify-center font-bold text-lg shadow-lg hover:rounded-xl transition-all">
+                <i class="fa-solid fa-bolt"></i>
+            </button>
+            <div class="w-8 h-[2px] bg-discord-light rounded-full my-1"></div>
+            <button class="w-12 h-12 rounded-3xl bg-discord-darker hover:bg-discord-accent text-slate-300 hover:text-white flex items-center justify-center text-lg hover:rounded-xl transition-all">
+                <i class="fa-solid fa-headset"></i>
+            </button>
+            <button class="w-12 h-12 rounded-3xl bg-discord-darker hover:bg-discord-green text-slate-300 hover:text-white flex items-center justify-center text-lg hover:rounded-xl transition-all">
+                <i class="fa-solid fa-compass"></i>
+            </button>
+        </div>
+
+        <!-- 2. CHANNELS & VOICE SIDEBAR -->
+        <aside id="channelSidebar" class="w-60 bg-discord-darker flex flex-col shrink-0 border-r border-black/20 absolute md:relative z-30 inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
+            <!-- Server Header -->
+            <div class="h-12 px-4 border-b border-black/20 flex items-center justify-between font-bold text-white text-sm">
+                <span class="truncate">Valiant Gamers Esports</span>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+            </div>
+
+            <!-- Channels Scroll Area -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-4 text-xs font-semibold text-slate-400">
+                <!-- Text Channels Group -->
+                <div>
+                    <div class="flex items-center justify-between px-2 py-1 uppercase tracking-wider text-[10px] text-slate-400">
+                        <span>Text Channels</span>
+                        <i class="fa-solid fa-plus hover:text-white cursor-pointer"></i>
+                    </div>
+                    <div class="space-y-0.5 mt-1">
+                        <button onclick="switchTextChannel('general-chat')" id="chan-general-chat" class="chan-btn w-full flex items-center space-x-2 px-2 py-1.5 rounded text-slate-300 bg-discord-light/60 text-white font-medium">
+                            <i class="fa-solid fa-hashtag text-slate-400 text-sm"></i>
+                            <span>general-chat</span>
+                        </button>
+                        <button onclick="switchTextChannel('game-news')" id="chan-game-news" class="chan-btn w-full flex items-center space-x-2 px-2 py-1.5 rounded text-slate-400 hover:bg-discord-light/40 hover:text-slate-200">
+                            <i class="fa-solid fa-hashtag text-slate-400 text-sm"></i>
+                            <span>game-news</span>
+                        </button>
+                        <button onclick="switchTextChannel('squad-finder')" id="chan-squad-finder" class="chan-btn w-full flex items-center space-x-2 px-2 py-1.5 rounded text-slate-400 hover:bg-discord-light/40 hover:text-slate-200">
+                            <i class="fa-solid fa-hashtag text-slate-400 text-sm"></i>
+                            <span>squad-finder</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Voice Channels Group -->
+                <div>
+                    <div class="flex items-center justify-between px-2 py-1 uppercase tracking-wider text-[10px] text-slate-400">
+                        <span>Voice Channels</span>
+                        <i class="fa-solid fa-plus hover:text-white cursor-pointer"></i>
+                    </div>
+                    <div class="space-y-0.5 mt-1">
+                        <!-- Voice Channel 1 -->
+                        <button onclick="joinVoiceChannel('General Voice')" id="vchan-general" class="w-full flex items-center justify-between px-2 py-1.5 rounded text-slate-400 hover:bg-discord-light/40 hover:text-slate-200">
+                            <span class="flex items-center space-x-2">
+                                <i class="fa-solid fa-volume-high text-sm text-slate-400"></i>
+                                <span>General Voice</span>
+                            </span>
+                            <span class="text-[10px] bg-discord-dark px-1.5 py-0.5 rounded text-slate-400" id="count-general">2</span>
+                        </button>
+                        <!-- Voice Channel 2 -->
+                        <button onclick="joinVoiceChannel('Squad Room #1')" id="vchan-squad1" class="w-full flex items-center justify-between px-2 py-1.5 rounded text-slate-400 hover:bg-discord-light/40 hover:text-slate-200">
+                            <span class="flex items-center space-x-2">
+                                <i class="fa-solid fa-volume-high text-sm text-slate-400"></i>
+                                <span>Squad Room #1</span>
+                            </span>
+                            <span class="text-[10px] bg-discord-dark px-1.5 py-0.5 rounded text-slate-400" id="count-squad1">1</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Voice Connection Status Strip (If Connected) -->
+            <div id="activeVoiceBar" class="hidden bg-discord-darkest/90 border-t border-black/30 p-2.5">
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-wifi text-discord-green text-sm animate-pulse"></i>
+                        <div class="truncate">
+                            <div class="font-bold text-discord-green text-[11px]">Voice Connected</div>
+                            <div id="connectedRoomName" class="text-[10px] text-slate-400 truncate">General Voice</div>
+                        </div>
+                    </div>
+                    <button onclick="leaveVoiceChannel()" class="text-discord-rose hover:bg-discord-rose/20 p-1.5 rounded transition-colors" title="Disconnect Call">
+                        <i class="fa-solid fa-phone-slash text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Controller Bottom Panel -->
+            <div class="h-14 bg-discord-darkest p-2 flex items-center justify-between border-t border-black/30">
+                <div class="flex items-center space-x-2 overflow-hidden">
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-full bg-discord-accent flex items-center justify-center font-bold text-white text-xs">
+                            YOU
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-discord-green border-2 border-discord-darkest"></span>
+                    </div>
+                    <div class="truncate text-xs">
+                        <div class="font-bold text-white truncate">ProGamer_99</div>
+                        <div class="text-[10px] text-slate-400 truncate">#0001</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1 text-slate-400 text-sm">
+                    <button id="btnMuteMic" onclick="toggleMic()" class="hover:bg-discord-light p-1.5 rounded text-slate-300" title="Mute Mic">
+                        <i id="iconMute" class="fa-solid fa-microphone"></i>
+                    </button>
+                    <button id="btnDeafen" onclick="toggleDeafen()" class="hover:bg-discord-light p-1.5 rounded text-slate-300" title="Deafen">
+                        <i id="iconDeafen" class="fa-solid fa-headphones"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 3. MAIN CHAT & VOICE HUB PANEL -->
+        <main class="flex-1 flex flex-col bg-discord-dark min-w-0">
+            
+            <!-- Chat Header Bar -->
+            <div class="h-12 px-4 border-b border-black/20 flex items-center justify-between shrink-0 bg-discord-dark">
+                <div class="flex items-center space-x-2 font-bold text-white text-sm">
+                    <i class="fa-solid fa-hashtag text-slate-400 text-base"></i>
+                    <span id="currentChanTitle">general-chat</span>
+                    <span class="text-xs font-normal text-slate-400 hidden sm:inline border-l border-slate-700 pl-2">General gamer banter & strategy</span>
+                </div>
+                <!-- Call Switcher Button -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="toggleVoiceHubView()" class="px-3 py-1 bg-discord-accent hover:bg-discord-accentHover text-white font-bold text-xs rounded-md transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-headset"></i>
+                        <span class="hidden sm:inline">Voice Call Hub</span>
+                    </button>
+                    <button id="toggleUserListBtn" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-users text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CHAT VIEW CONTAINER -->
+            <div id="chatView" class="flex-1 flex flex-col overflow-hidden">
+                <!-- Messages List -->
+                <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <!-- Welcome Banner -->
+                    <div class="my-4 p-4 bg-discord-darker rounded-xl border border-slate-800">
+                        <div class="w-12 h-12 rounded-full bg-discord-accent/20 text-discord-accent flex items-center justify-center text-xl mb-2">
+                            <i class="fa-solid fa-comments"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-white">Welcome to #general-chat!</h2>
+                        <p class="text-xs text-slate-400 mt-1">This is the start of the community chat channel. Type <strong class="text-discord-accent">@bot</strong> to summon the AI Gaming Assistant.</p>
+                    </div>
+
+                    <!-- Initial Messages -->
+                    <div class="flex space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white text-xs shrink-0">
+                            A
+                        </div>
+                        <div>
+                            <div class="flex items-baseline space-x-2">
+                                <span class="font-bold text-sm text-purple-400">ApexLegend</span>
+                                <span class="text-[10px] text-slate-500">Today at 9:15 PM</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-0.5">Anyone down for ranked squad matches right now? Need a support main!</p>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-discord-accent flex items-center justify-center font-bold text-white text-xs shrink-0">
+                            AI
+                        </div>
+                        <div>
+                            <div class="flex items-baseline space-x-2">
+                                <span class="font-bold text-sm text-discord-accent">Nexus Bot</span>
+                                <span class="bg-discord-accent text-[9px] text-white px-1 rounded font-bold uppercase">BOT</span>
+                                <span class="text-[10px] text-slate-500">Today at 9:16 PM</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-0.5">Welcome gamers! Tag me with <span class="text-discord-accent font-semibold">@bot</span> anytime to ask for game tips or system checks.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Form -->
+                <div class="p-3 bg-discord-dark shrink-0">
+                    <form id="chatForm" onsubmit="sendMessage(event)" class="bg-discord-darker rounded-lg px-4 py-2.5 flex items-center space-x-3 border border-transparent focus-within:border-discord-accent transition-all">
+                        <button type="button" onclick="triggerFileUpload()" class="text-slate-400 hover:text-white text-sm">
+                            <i class="fa-solid fa-circle-plus"></i>
+                        </button>
+                        <input id="chatInput" type="text" placeholder="Message #general-chat (Tag @bot for AI)..." class="bg-transparent flex-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+                        <div class="flex items-center space-x-2 text-slate-400 text-sm">
+                            <button type="button" onclick="insertEmoji('🎮')" class="hover:text-white">🎮</button>
+                            <button type="button" onclick="insertEmoji('🔥')" class="hover:text-white">🔥</button>
+                            <button type="submit" class="text-discord-accent hover:text-discord-accentHover">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- VOICE CALL SIMULATOR HUB VIEW (Hidden by default) -->
+            <div id="voiceHubView" class="hidden flex-1 bg-discord-darkest p-6 flex flex-col justify-between overflow-y-auto">
+                <div>
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 id="hubRoomTitle" class="text-xl font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-volume-high text-discord-green"></i>
+                                <span>General Voice Room</span>
+                            </h2>
+                            <p class="text-xs text-slate-400">High-Fidelity Low Latency Voice Channel</p>
+                        </div>
+                        <span class="px-3 py-1 bg-discord-green/10 text-discord-green border border-discord-green/30 rounded-full text-xs font-mono font-bold flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-discord-green animate-ping"></span>
+                            <span>LIVE CALL</span>
+                        </span>
+                    </div>
+
+                    <!-- Voice Grid Active Members -->
+                    <div id="voiceGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <!-- Speaker 1 (User) -->
+                        <div class="bg-discord-darker p-6 rounded-2xl border border-slate-800 flex flex-col items-center justify-center space-y-3 relative overflow-hidden group">
+                            <div id="avatarUser" class="w-20 h-20 rounded-full bg-discord-accent flex items-center justify-center font-bold text-2xl text-white transition-all">
+                                YOU
+                            </div>
+                            <span class="text-xs font-bold text-white">ProGamer_99</span>
+                            <span class="text-[10px] text-slate-400 font-mono">You (Host)</span>
+                        </div>
+
+                        <!-- Speaker 2 (Simulated Bot / User) -->
+                        <div class="bg-discord-darker p-6 rounded-2xl border border-slate-800 flex flex-col items-center justify-center space-y-3 relative overflow-hidden">
+                            <div class="w-20 h-20 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-2xl text-white speaking-glow">
+                                CR
+                            </div>
+                            <span class="text-xs font-bold text-white">CyberRider</span>
+                            <span class="text-[10px] text-discord-green font-mono">Speaking...</span>
+                        </div>
+
+                        <!-- Speaker 3 -->
+                        <div class="bg-discord-darker p-6 rounded-2xl border border-slate-800 flex flex-col items-center justify-center space-y-3 relative overflow-hidden">
+                            <div class="w-20 h-20 rounded-full bg-purple-600 flex items-center justify-center font-bold text-2xl text-white">
+                                AP
+                            </div>
+                            <span class="text-xs font-bold text-white">ApexLegend</span>
+                            <span class="text-[10px] text-slate-400 font-mono">Muted</span>
+                        </div>
+                    </div>
+
+                    <!-- Realtime Audio Waveform Canvas Visualizer -->
+                    <div class="mt-8 bg-discord-darker p-4 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-2 font-mono">
+                            <span>Audio Waveform Spectrum</span>
+                            <span>48 kHz / 24-bit</span>
+                        </div>
+                        <canvas id="waveformCanvas" class="w-full h-16 bg-discord-darkest rounded-lg"></canvas>
+                    </div>
+                </div>
+
+                <!-- Call Controls Toolbar -->
+                <div class="mt-6 flex items-center justify-center space-x-4">
+                    <button onclick="toggleMic()" class="w-12 h-12 rounded-full bg-discord-dark flex items-center justify-center text-white hover:bg-slate-700 transition-all">
+                        <i id="hubIconMic" class="fa-solid fa-microphone text-lg"></i>
+                    </button>
+                    <button onclick="toggleDeafen()" class="w-12 h-12 rounded-full bg-discord-dark flex items-center justify-center text-white hover:bg-slate-700 transition-all">
+                        <i id="hubIconDeafen" class="fa-solid fa-headphones text-lg"></i>
+                    </button>
+                    <button onclick="simulateScreenShare()" class="w-12 h-12 rounded-full bg-discord-dark flex items-center justify-center text-white hover:bg-slate-700 transition-all" title="Share Screen">
+                        <i class="fa-solid fa-desktop text-lg"></i>
+                    </button>
+                    <button onclick="leaveVoiceChannel()" class="w-14 h-14 rounded-full bg-discord-rose flex items-center justify-center text-white hover:bg-red-600 transition-all shadow-lg shadow-rose-600/30">
+                        <i class="fa-solid fa-phone-slash text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 4. ONLINE USERS SIDEBAR -->
+        <aside id="userSidebar" class="w-56 bg-discord-darker border-l border-black/20 p-4 shrink-0 hidden lg:block overflow-y-auto">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Online — 3</div>
+            
+            <div class="space-y-3">
+                <!-- User 1 -->
+                <div class="flex items-center space-x-2.5 cursor-pointer hover:bg-discord-light/30 p-1.5 rounded-md transition-colors">
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-full bg-discord-accent flex items-center justify-center font-bold text-white text-xs">YOU</div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-discord-green border-2 border-discord-darker"></span>
+                    </div>
+                    <div class="truncate text-xs">
+                        <div class="font-bold text-white truncate">ProGamer_99</div>
+                        <div class="text-[10px] text-slate-400 truncate">Playing Valorant</div>
+                    </div>
+                </div>
+
+                <!-- User 2 -->
+                <div class="flex items-center space-x-2.5 cursor-pointer hover:bg-discord-light/30 p-1.5 rounded-md transition-colors">
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-xs">CR</div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-discord-green border-2 border-discord-darker"></span>
+                    </div>
+                    <div class="truncate text-xs">
+                        <div class="font-bold text-white truncate">CyberRider</div>
+                        <div class="text-[10px] text-slate-400 truncate">Streaming CS2</div>
+                    </div>
+                </div>
+
+                <!-- User 3 -->
+                <div class="flex items-center space-x-2.5 cursor-pointer hover:bg-discord-light/30 p-1.5 rounded-md transition-colors">
+                    <div class="relative">
+                        <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white text-xs">AP</div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-discord-green border-2 border-discord-darker"></span>
+                    </div>
+                    <div class="truncate text-xs">
+                        <div class="font-bold text-white truncate">ApexLegend</div>
+                        <div class="text-[10px] text-slate-400 truncate">In Voice Channel</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Hidden File Input for mock upload -->
+    <input type="file" id="mockFileInput" class="hidden" onchange="handleMockFileUpload(event)">
+
+    <!-- JavaScript Logic -->
+    <script>
+        // State Variables
+        let currentTextChannel = 'general-chat';
+        let connectedVoiceRoom = null;
+        let isMuted = false;
+        let isDeafened = false;
+        let audioCtx = null;
+        let animFrameId = null;
+
+        // Web Audio Synthesizer for UI Sound Effects
+        function playAudioEffect(type) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'join') {
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'leave') {
+                    osc.frequency.setValueAtTime(660, now);
+                    osc.frequency.exponentialRampToValueAtTime(330, now + 0.2);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'mute') {
+                    osc.frequency.setValueAtTime(300, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                }
+            } catch (e) {
+                console.log('Audio Context muted');
+            }
+        }
+
+        // Switch Text Channel
+        function switchTextChannel(channelName) {
+            currentTextChannel = channelName;
+            document.getElementById('currentChanTitle').innerText = channelName;
+            
+            document.querySelectorAll('.chan-btn').forEach(btn => {
+                btn.classList.remove('bg-discord-light/60', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeBtn = document.getElementById(`chan-${channelName}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-discord-light/60', 'text-white');
+                activeBtn.classList.remove('text-slate-400');
+            }
+
+            // Switch view back to chat if in Voice Hub
+            document.getElementById('chatView').classList.remove('hidden');
+            document.getElementById('voiceHubView').classList.add('hidden');
+        }
+
+        // Send Chat Message
+        function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMessage('YOU', 'ProGamer_99', text, 'bg-discord-accent');
+            input.value = '';
+
+            // AI Bot Auto Reply Trigger
+            if (text.toLowerCase().includes('@bot') || text.toLowerCase().includes('bot') || text.toLowerCase().includes('hello')) {
+                setTimeout(() => {
+                    generateBotReply(text);
+                }, 1000);
+            }
+        }
+
+        function appendMessage(avatarText, username, text, avatarBg = 'bg-discord-accent', isBot = false) {
+            const container = document.getElementById('messagesContainer');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'flex space-x-3';
+            
+            const botBadge = isBot ? `<span class="bg-discord-accent text-[9px] text-white px-1 rounded font-bold uppercase ml-1">BOT</span>` : '';
+
+            msgDiv.innerHTML = `
+                <div class="w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-white text-xs shrink-0">
+                    ${avatarText}
+                </div>
+                <div>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="font-bold text-sm text-white">${username}</span>
+                        ${botBadge}
+                        <span class="text-[10px] text-slate-500">Just now</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mt-0.5">${text}</p>
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // AI Gaming Bot Assistant Replies
+        function generateBotReply(userMsg) {
+            const replies = [
+                "GLHF! Ready to dominate the match! 🎮",
+                "I'm here! Tip of the day: Always communicate callouts with your squad!",
+                "Check out the #squad-finder channel if you need a full team!",
+                "All systems operational! Ping me anytime for gaming tips."
+            ];
+            const randomReply = replies[Math.floor(Math.random() * replies.length)];
+            appendMessage('AI', 'Nexus Bot', randomReply, 'bg-discord-accent', true);
+            playAudioEffect('mute');
+        }
+
+        // Voice Call Controls
+        function joinVoiceChannel(roomName) {
+            connectedVoiceRoom = roomName;
+            document.getElementById('connectedRoomName').innerText = roomName;
+            document.getElementById('hubRoomTitle').innerText = roomName;
+            document.getElementById('activeVoiceBar').classList.remove('hidden');
+            
+            playAudioEffect('join');
+            startWaveformVisualizer();
+        }
+
+        function leaveVoiceChannel() {
+            connectedVoiceRoom = null;
+            document.getElementById('activeVoiceBar').classList.add('hidden');
+            document.getElementById('voiceHubView').classList.add('hidden');
+            document.getElementById('chatView').classList.remove('hidden');
+            
+            playAudioEffect('leave');
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+        }
+
+        function toggleVoiceHubView() {
+            const chatView = document.getElementById('chatView');
+            const voiceHubView = document.getElementById('voiceHubView');
+
+            if (!connectedVoiceRoom) {
+                joinVoiceChannel('General Voice');
+            }
+
+            chatView.classList.toggle('hidden');
+            voiceHubView.classList.toggle('hidden');
+        }
+
+        function toggleMic() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('iconMute');
+            const hubIcon = document.getElementById('hubIconMic');
+            const avatarUser = document.getElementById('avatarUser');
+
+            if (isMuted) {
+                icon.className = 'fa-solid fa-microphone-slash text-discord-rose';
+                if (hubIcon) hubIcon.className = 'fa-solid fa-microphone-slash text-discord-rose';
+                avatarUser.classList.remove('speaking-glow');
+            } else {
+                icon.className = 'fa-solid fa-microphone text-slate-300';
+                if (hubIcon) hubIcon.className = 'fa-solid fa-microphone text-white';
+                avatarUser.classList.add('speaking-glow');
+            }
+            playAudioEffect('mute');
+        }
+
+        function toggleDeafen() {
+            isDeafened = !isDeafened;
+            const icon = document.getElementById('iconDeafen');
+            const hubIcon = document.getElementById('hubIconDeafen');
+
+            if (isDeafened) {
+                icon.className = 'fa-solid fa-headphones-simple text-discord-rose';
+                if (hubIcon) hubIcon.className = 'fa-solid fa-headphones-simple text-discord-rose';
+            } else {
+                icon.className = 'fa-solid fa-headphones text-slate-300';
+                if (hubIcon) hubIcon.className = 'fa-solid fa-headphones text-white';
+            }
+            playAudioEffect('mute');
+        }
+
+        function simulateScreenShare() {
+            alert('Simulating Screen Share... Stream broadcasted to room members!');
+        }
+
+        // Canvas Waveform Visualizer Simulation
+        function startWaveformVisualizer() {
+            const canvas = document.getElementById('waveformCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            function render() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#23a55a';
+
+                const barWidth = 4;
+                const gap = 3;
+                const barsCount = Math.floor(canvas.width / (barWidth + gap));
+
+                for (let i = 0; i < barsCount; i++) {
+                    const barHeight = isMuted ? 4 : Math.random() * (canvas.height - 10) + 4;
+                    const x = i * (barWidth + gap);
+                    const y = (canvas.height - barHeight) / 2;
+                    ctx.fillRect(x, y, barWidth, barHeight);
+                }
+
+                animFrameId = requestAnimationFrame(render);
+            }
+            render();
+        }
+
+        // File upload mock
+        function triggerFileUpload() {
+            document.getElementById('mockFileInput').click();
+        }
+
+        function handleMockFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                appendMessage('YOU', 'ProGamer_99', `📁 Shared attachment: <strong>${file.name}</strong>`);
+            }
+        }
+
+        function insertEmoji(emoji) {
+            const input = document.getElementById('chatInput');
+            input.value += ' ' + emoji;
+            input.focus();
+        }
+
+        // Mobile Sidebar Toggle
+        document.getElementById('toggleMobileSidebarBtn').addEventListener('click', () => {
+            document.getElementById('channelSidebar').classList.toggle('-translate-x-full');
+        });
+
+        document.getElementById('toggleUserListBtn').addEventListener('click', () => {
+            document.getElementById('userSidebar').classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
